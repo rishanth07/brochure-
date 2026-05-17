@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alexa, Take Me On A Trip | The Code Squad</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        syne: ['Syne', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            900: '#030712',
+                            800: '#0B0F19',
+                            700: '#1F2937',
+                        },
+                        neon: {
+                            cyan: '#00F0FF',
+                            pink: '#FF007A',
+                            emerald: '#10B981',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .neon-border {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2), inset 0 0 15px rgba(0, 240, 255, 0.1);
+        }
+        .neon-border-pink {
+            box-shadow: 0 0 15px rgba(255, 0, 122, 0.2), inset 0 0 15px rgba(255, 0, 122, 0.1);
+        }
+        .text-neon-cyan {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+        .text-neon-pink {
+            text-shadow: 0 0 10px rgba(255, 0, 122, 0.5);
+        }
+        .glass-panel {
+            background: rgba(11, 15, 25, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1F2937;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00F0FF;
+        }
+        .pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .6; }
+        }
+    </style>
+</head>
+<body class="bg-dark-900 text-gray-100 font-sans antialiased selection:bg-neon-cyan selection:text-dark-900 overflow-x-hidden">
+
+    <!-- Ambient Audio/Vibe Overlay Controller -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="vibe-btn" onclick="toggleVibeMode()" class="flex items-center gap-2 bg-dark-800 border border-neon-cyan/30 text-neon-cyan px-4 py-3 rounded-full hover:bg-neon-cyan hover:text-dark-900 transition-all duration-300 shadow-lg group">
+            <span class="relative flex h-3 w-3">
+                <span id="vibe-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-cyan opacity-75"></span>
+                <span id="vibe-dot" class="relative inline-flex rounded-full h-3 w-3 bg-neon-cyan"></span>
+            </span>
+            <span class="text-xs font-semibold tracking-wider uppercase font-syne group-hover:text-dark-900">Bus Vibe: Off</span>
+            <i id="vibe-icon" class="fa-solid fa-volume-xmark text-sm"></i>
+        </button>
+    </div>
+
+    <!-- Background Cinematic Mountain Image Overlay -->
+     <div class="fixed inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1920')] bg-cover bg-center opacity-10 mix-blend-overlay pointer-events-none"></div>
+    <div class="fixed inset-0 z-0 bg-gradient-to-t from-dark-900 via-dark-900/90 to-dark-900/60 pointer-events-none"></div>
+
+    <!-- Main Outer Container -->
+    <div class="relative z-10 max-w-5xl mx-auto px-4 py-8 min-h-screen flex flex-col justify-between">
+        
+        <!-- Header / Logo -->
+        <header class="flex justify-between items-center mb-8 border-b border-gray-800/60 pb-5">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-lg bg-gradient-to-tr from-neon-cyan to-neon-pink flex items-center justify-center text-dark-900 font-extrabold text-lg shadow-md">
+                    CS
+                </div>
+                <div>
+                    <h3 class="font-syne text-sm tracking-widest text-gray-400 uppercase">The Code Squad</h3>
+                    <p class="text-[10px] text-neon-cyan tracking-wider font-mono">EST. 2026 • ANNUAL GETAWAY</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/20">
+                    <i class="fa-solid fa-location-arrow mr-1.5 animate-pulse"></i> Chikmagalur Bound
+                </span>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs (6-Page Brochure Format) -->
+        <nav class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-8 bg-dark-800/80 p-1.5 rounded-xl border border-gray-800/50">
+            <button onclick="switchTab('cover')" id="tab-cover" class="nav-tab active-tab bg-neon-cyan text-dark-900 font-bold px-3 py-2.5 rounded-lg text-xs tracking-wider uppercase font-syne transition-all duration-300 text-center">
+                1. Cover
+            </button>
+            <button onclick="switchTab('about')" id="tab-about" class="nav-tab text-gray-400 hover:text-white px-3 py-2.5 rounded-lg text-xs tracking-wider uppercase font-syne transition-all duration-300 text-center">
+                2. About
+            </button>
+            <button onclick="switchTab('groups')" id="tab-groups" class="nav-tab text-gray-400 hover:text-white px-3 py-2.5 rounded-lg text-xs tracking-wider uppercase font-syne transition-all duration-300 text-center">
+                3. Squads & Rules
+            </button>
+            <button onclick="switchTab('itinerary')" id="tab-itinerary" class="nav-tab text-gray-400 hover:text-white px-3 py-2.5 rounded-lg text-xs tracking-wider uppercase font-syne transition-all duration-300 text-center">
+                4. Itinerary
+            </button>
+            <button onclick="switchTab('luxury')" id="tab-luxury" class="nav-tab text-gray-400 hover:text-white px-3 py-2.5 rounded-lg text-xs tracking-wider uppercase font-syne transition-all duration-300 text-center">
+                5. Perks & Packing
+            </button>
+            <button onclick="switchTab('contact')" id="tab-contact" class="nav-tab text-gray-400 hover:text-white px-3 py-2.5 rounded-lg text-xs tracking-wider uppercase font-syne transition-all duration-300 text-center">
+                6. Vault
+            </button>
+        </nav>
+
+        <!-- Dynamic Pages Container -->
+        <main class="flex-grow flex flex-col justify-center mb-10">
+            
+            <!-- PAGE 1: COVER PAGE -->
+            <section id="page-cover" class="tab-content block">
+                <div class="grid md:grid-cols-12 gap-8 items-center py-4">
+                    <div class="md:col-span-7 space-y-6">
+                        <div class="inline-block bg-neon-pink/10 text-neon-pink text-xs uppercase font-mono tracking-[0.2em] px-3 py-1 rounded border border-neon-pink/20">
+                            ROAD TRIP CRUISE '26
+                        </div>
+                        <h1 class="font-syne text-5xl md:text-7xl font-black leading-none text-white tracking-tight">
+                            Alexa, Take Me On <span class="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan via-indigo-400 to-neon-pink text-neon-cyan">A Trip</span>
+                        </h1>
+                        <p class="text-gray-400 text-base md:text-lg max-w-lg leading-relaxed">
+                            No compilers, no debuggers, no stack overflows. Just winding mountain roads, heavy mist, infinite playlists, and the ultimate developer escape from Mangalore to Chikmagalur.
+                        </p>
+                        
+                        <div class="grid grid-cols-2 gap-4 border-t border-b border-gray-800/80 py-5 my-6">
+                            <div>
+                                <span class="text-[10px] uppercase tracking-widest text-gray-500 block">THE ROUTE</span>
+                                <span class="text-sm font-semibold text-white flex items-center gap-1.5 mt-1">
+                                    Mangalore <i class="fa-solid fa-arrow-right text-[10px] text-neon-cyan"></i> Chikmagalur
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] uppercase tracking-widest text-gray-500 block">THE TIMELINE</span>
+                                <span class="text-sm font-semibold text-white flex items-center gap-1.5 mt-1">
+                                    <i class="fa-regular fa-calendar text-neon-pink text-xs"></i> 1 • 2 • 3 June 2026
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <button onclick="switchTab('about')" class="bg-gradient-to-r from-neon-cyan to-indigo-500 text-dark-900 font-bold px-6 py-3.5 rounded-xl hover:shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all duration-300 text-sm tracking-wide font-syne flex items-center gap-2">
+                                START JOURNEY <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                            <span class="text-xs text-gray-500 italic font-mono">Code compiles, memories remain.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-5 relative">
+                        <div class="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-neon-cyan to-neon-pink opacity-20 blur-xl"></div>
+                        <div class="relative rounded-2xl overflow-hidden glass-panel border border-neon-cyan/20 p-4">
+                            <!-- Cinematic Bus Image placeholder with overlay aesthetics -->
+                            <div class="relative h-72 rounded-xl overflow-hidden bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=800');">
+                                <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent"></div>
+                                <div class="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+                                    <div>
+                                        <span class="text-[9px] uppercase tracking-widest text-neon-cyan font-mono bg-dark-900/80 px-2 py-0.5 rounded">Vibe Cruiser</span>
+                                        <h4 class="text-lg font-syne text-white mt-1">Neon Expressway</h4>
+                                    </div>
+                                    <span class="text-xs text-neon-pink font-semibold flex items-center gap-1">
+                                        <i class="fa-solid fa-wifi animate-pulse"></i> Active Starlink
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-800/60 flex justify-between items-center text-xs">
+                                <div class="flex gap-1.5 items-center">
+                                    <div class="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></div>
+                                    <span class="text-gray-400 font-mono">Bus GPS Active</span>
+                                </div>
+                                <span class="text-gray-500 font-mono">MNG-CKM-001</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 2: ABOUT THE TRIP -->
+            <section id="page-about" class="tab-content hidden">
+                <div class="glass-panel rounded-2xl p-6 md:p-10 border border-gray-800/80 space-y-8">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800/60 pb-6">
+                        <div>
+                            <span class="text-xs font-mono text-neon-cyan uppercase tracking-widest">CHAPTER 01</span>
+                            <h2 class="font-syne text-3xl font-bold mt-1 text-white">The Manifesto</h2>
+                        </div>
+                        <div class="text-gray-400 max-w-md text-sm md:text-right">
+                            "Because we spent 362 days dealing with Merge Conflicts, we deserve 3 days of zero conflicts."
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="bg-dark-800/50 p-5 rounded-xl border border-gray-800 hover:border-neon-cyan/20 transition-all duration-300">
+                            <div class="text-2xl text-neon-cyan mb-3"><i class="fa-solid fa-mountain"></i></div>
+                            <h4 class="font-syne text-base font-bold text-white mb-2">The Escape</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Moving from the coastal sands of Mangalore up into the majestic, mist-veiled Western Ghats of Chikmagalur. Uncapped heights, tea estate runs, and crisp mountain oxygen.
+                            </p>
+                        </div>
+                        <div class="bg-dark-800/50 p-5 rounded-xl border border-gray-800 hover:border-neon-pink/20 transition-all duration-300">
+                            <div class="text-2xl text-neon-pink mb-3"><i class="fa-solid fa-guitar"></i></div>
+                            <h4 class="font-syne text-base font-bold text-white mb-2">The Night Session</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Starlit skies, acoustic strings, campfire smoke, and heavy-bass travel music in our customized luxury bus. The vibe is carefully engineered for optimal relaxation.
+                            </p>
+                        </div>
+                        <div class="bg-dark-800/50 p-5 rounded-xl border border-gray-800 hover:border-emerald-500/20 transition-all duration-300">
+                            <div class="text-2xl text-emerald-400 mb-3"><i class="fa-solid fa-people-group"></i></div>
+                            <h4 class="font-syne text-base font-bold text-white mb-2">The Squad Bonding</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Shared cabins, group tracks, cooperative dining, and structured squads where everyone runs an agency role to keep the trip running perfectly.
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Travel Vibe Quote Block -->
+                    <div class="bg-gradient-to-r from-neon-cyan/10 to-neon-pink/10 border-l-4 border-neon-cyan p-5 rounded-r-xl">
+                        <p class="text-sm italic text-gray-300 font-mono">
+                            "Some trips end. The memories? They live on in local host repositories, forever un-garbage-collected."
+                        </p>
+                        <span class="text-xs text-neon-cyan font-mono block mt-2">— The Code Squad Dev Team</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 3: SQUAD STRUCTURE & RULES -->
+            <section id="page-groups" class="tab-content hidden">
+                <div class="grid md:grid-cols-12 gap-8 items-start">
+                    
+                    <!-- Squad Structure (Left Column) -->
+                    <div class="md:col-span-7 space-y-6">
+                        <div class="border-b border-gray-800/80 pb-3">
+                            <span class="text-xs font-mono text-neon-pink uppercase tracking-widest">TEAM CHARTER</span>
+                            <h2 class="font-syne text-3xl font-bold text-white mt-1">Squad Roles</h2>
+                            <p class="text-xs text-gray-400 mt-1">Structured for premium administration, flawless execution, and good vibes.</p>
+                        </div>
+
+                        <!-- Interactive Accordion for Teams -->
+                        <div class="space-y-3">
+                            <!-- Finance -->
+                            <div class="bg-dark-800/60 border border-gray-800 rounded-xl overflow-hidden">
+                                <button onclick="toggleAccordion('team-fin')" class="w-full flex justify-between items-center p-4 text-left font-syne text-sm font-semibold text-white hover:bg-dark-700/30 transition-all">
+                                    <span class="flex items-center gap-2"><i class="fa-solid fa-wallet text-neon-cyan"></i> Finance Operations Team 💰</span>
+                                    <i id="team-fin-icon" class="fa-solid fa-chevron-down text-xs text-gray-500 transition-transform duration-200"></i>
+                                </button>
+                                <div id="team-fin-content" class="hidden p-4 border-t border-gray-800/60 bg-dark-900/40 text-xs text-gray-400 space-y-2">
+                                    <p class="font-semibold text-gray-300">Responsibility Matrix:</p>
+                                    <ul class="list-disc pl-4 space-y-1">
+                                        <li>Collect entry ticket funds from delegates prior to departure.</li>
+                                        <li>Direct resort-level financial clearances and transaction confirmations.</li>
+                                        <li>Maintain the emergency reserve pot for unforeseen contingencies.</li>
+                                    </ul>
+                                    <div class="mt-3 pt-3 border-t border-gray-800/40 flex justify-between text-[11px] font-mono text-neon-cyan">
+                                        <span>HEAD: [TBD - Nominated Dev]</span>
+                                        <span>DEPUTY: [TBD]</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Travel Coordinator -->
+                            <div class="bg-dark-800/60 border border-gray-800 rounded-xl overflow-hidden">
+                                <button onclick="toggleAccordion('team-trav')" class="w-full flex justify-between items-center p-4 text-left font-syne text-sm font-semibold text-white hover:bg-dark-700/30 transition-all">
+                                    <span class="flex items-center gap-2"><i class="fa-solid fa-bus text-neon-pink"></i> Navigation & Logistics 🚌</span>
+                                    <i id="team-trav-icon" class="fa-solid fa-chevron-down text-xs text-gray-500 transition-transform duration-200"></i>
+                                </button>
+                                <div id="team-trav-content" class="hidden p-4 border-t border-gray-800/60 bg-dark-900/40 text-xs text-gray-400 space-y-2">
+                                    <p class="font-semibold text-gray-300">Responsibility Matrix:</p>
+                                    <ul class="list-disc pl-4 space-y-1">
+                                        <li>Conduct attendance sweeps during all embarkation milestones.</li>
+                                        <li>Manage cabin seat rosters and optimize bus layout plans.</li>
+                                        <li>Interface with pilot and local navigation leads during stops.</li>
+                                    </ul>
+                                    <div class="mt-3 pt-3 border-t border-gray-800/40 flex justify-between text-[11px] font-mono text-neon-pink">
+                                        <span>COORDINATOR: [TBD]</span>
+                                        <span>ASST: [TBD]</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Media -->
+                            <div class="bg-dark-800/60 border border-gray-800 rounded-xl overflow-hidden">
+                                <button onclick="toggleAccordion('team-med')" class="w-full flex justify-between items-center p-4 text-left font-syne text-sm font-semibold text-white hover:bg-dark-700/30 transition-all">
+                                    <span class="flex items-center gap-2"><i class="fa-solid fa-camera text-emerald-400"></i> Cinematic & Media 📸</span>
+                                    <i id="team-med-icon" class="fa-solid fa-chevron-down text-xs text-gray-500 transition-transform duration-200"></i>
+                                </button>
+                                <div id="team-med-content" class="hidden p-4 border-t border-gray-800/60 bg-dark-900/40 text-xs text-gray-400 space-y-2">
+                                    <p class="font-semibold text-gray-300">Responsibility Matrix:</p>
+                                    <ul class="list-disc pl-4 space-y-1">
+                                        <li>Capture ambient, behind-the-scenes footage and landscape reels.</li>
+                                        <li>Drone piloting for panoramic squad frames in Chikmagalur mountains.</li>
+                                        <li>Maintain live shared vault/Drive album uploads.</li>
+                                    </ul>
+                                    <div class="mt-3 pt-3 border-t border-gray-800/40 flex justify-between text-[11px] font-mono text-emerald-400">
+                                        <span>DIRECTOR: [TBD]</span>
+                                        <span>EDITOR: [TBD]</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fun & Games -->
+                            <div class="bg-dark-800/60 border border-gray-800 rounded-xl overflow-hidden">
+                                <button onclick="toggleAccordion('team-fun')" class="w-full flex justify-between items-center p-4 text-left font-syne text-sm font-semibold text-white hover:bg-dark-700/30 transition-all">
+                                    <span class="flex items-center gap-2"><i class="fa-solid fa-gamepad text-purple-400"></i> Recreation & Entertainment 🎵</span>
+                                    <i id="team-fun-icon" class="fa-solid fa-chevron-down text-xs text-gray-500 transition-transform duration-200"></i>
+                                    </button>
+                                <div id="team-fun-content" class="hidden p-4 border-t border-gray-800/60 bg-dark-900/40 text-xs text-gray-400 space-y-2">
+                                    <p class="font-semibold text-gray-300">Responsibility Matrix:</p>
+                                    <ul class="list-disc pl-4 space-y-1">
+                                        <li>Curate and sequence localized road trip audio streams/playlists.</li>
+                                        <li>Coordinate ice-breaking operations and evening campfire games.</li>
+                                        <li>Enforce the punishment challenges for rule violators.</li>
+                                    </ul>
+                                    <div class="mt-3 pt-3 border-t border-gray-800/40 flex justify-between text-[11px] font-mono text-purple-400">
+                                        <span>VIBE MASTER: [TBD]</span>
+                                        <span>DJ: [TBD]</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Safety -->
+                            <div class="bg-dark-800/60 border border-gray-800 rounded-xl overflow-hidden">
+                                <button onclick="toggleAccordion('team-saf')" class="w-full flex justify-between items-center p-4 text-left font-syne text-sm font-semibold text-white hover:bg-dark-700/30 transition-all">
+                                    <span class="flex items-center gap-2"><i class="fa-solid fa-kit-medical text-red-400"></i> First Aid & Security 🚨</span>
+                                    <i id="team-saf-icon" class="fa-solid fa-chevron-down text-xs text-gray-500 transition-transform duration-200"></i>
+                                </button>
+                                <div id="team-saf-content" class="hidden p-4 border-t border-gray-800/60 bg-dark-900/40 text-xs text-gray-400 space-y-2">
+                                    <p class="font-semibold text-gray-300">Responsibility Matrix:</p>
+                                    <ul class="list-disc pl-4 space-y-1">
+                                        <li>Maintain the basic clinical medical chest (first aid, anti-emetic, bandages).</li>
+                                        <li>Confirm security measures during wild terrain checkpoints.</li>
+                                        <li>Point of contact for emergency calls or local emergency clinics.</li>
+                                    </ul>
+                                    <div class="mt-3 pt-3 border-t border-gray-800/40 flex justify-between text-[11px] font-mono text-red-400">
+                                        <span>SURGEON GENERAL: [TBD]</span>
+                                        <span>DEPUTY: [TBD]</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rules & Funny Punishments (Right Column) -->
+                    <div class="md:col-span-5 space-y-6">
+                        <!-- Code of Conduct -->
+                        <div class="glass-panel rounded-xl p-5 border border-neon-cyan/20">
+                            <h3 class="font-syne text-base font-bold text-white mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-scroll text-neon-cyan"></i> The Code of Conduct
+                            </h3>
+                            <ul class="space-y-2 text-xs text-gray-400">
+                                <li class="flex items-start gap-2">
+                                    <span class="text-neon-cyan font-mono mt-0.5">01.</span>
+                                    <span>Respect mutual comfort limits and maintain peak peer relations.</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-neon-cyan font-mono mt-0.5">02.</span>
+                                    <span>Sync exact boarding timings. Late arrivals impact the whole stack.</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-neon-cyan font-mono mt-0.5">03.</span>
+                                    <span>Prevent garbage piles. Clean up snacks immediately.</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-neon-cyan font-mono mt-0.5">04.</span>
+                                    <span>Zero tolerance for reckless activities on viewpoint cliffs.</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-neon-cyan font-mono mt-0.5">05.</span>
+                                    <span>Strictly report destination detours to logistics leads.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Fun Punishments -->
+                        <div class="glass-panel rounded-xl p-5 border border-neon-pink/20">
+                            <h3 class="font-syne text-base font-bold text-white mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-gavel text-neon-pink"></i> Outlaws Penalty Board
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center text-xs pb-2 border-b border-gray-800/60">
+                                    <div>
+                                        <p class="font-semibold text-gray-200">Late Boarding</p>
+                                        <p class="text-[10px] text-gray-500">Delaying the vehicle route departure.</p>
+                                    </div>
+                                    <span class="text-neon-pink bg-neon-pink/10 border border-neon-pink/20 px-2 py-0.5 rounded font-mono text-[10px]">Buy Snack Stock</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs pb-2 border-b border-gray-800/60">
+                                    <div>
+                                        <p class="font-semibold text-gray-200">Missing Attendance Call</p>
+                                        <p class="text-[10px] text-gray-500">Leaving coordinators on hold.</p>
+                                    </div>
+                                    <span class="text-neon-pink bg-neon-pink/10 border border-neon-pink/20 px-2 py-0.5 rounded font-mono text-[10px]">Mic Solo Performance</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs pb-2 border-b border-gray-800/60">
+                                    <div>
+                                        <p class="font-semibold text-gray-200">Premature Sleeping</p>
+                                        <p class="text-[10px] text-gray-500">Crashing before night lights turn on.</p>
+                                    </div>
+                                    <span class="text-neon-pink bg-neon-pink/10 border border-neon-pink/20 px-2 py-0.5 rounded font-mono text-[10px]">Group Selfie Target</span>
+                                </div><div class="flex justify-between items-center text-xs">
+                                    <div>
+                                        <p class="font-semibold text-gray-200">Lost Luggage/Asset</p>
+                                        <p class="text-[10px] text-gray-500">Losing non-personal squad material.</p>
+                                    </div>
+                                    <span class="text-neon-pink bg-neon-pink/10 border border-neon-pink/20 px-2 py-0.5 rounded font-mono text-[10px]">Sponsor Squad Tea Round</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- PAGE 4: ITINERARY TIMELINE -->
+            <section id="page-itinerary" class="tab-content hidden">
+                <div class="space-y-6">
+                    <div class="text-center max-w-md mx-auto mb-6">
+                        <span class="text-xs font-mono text-neon-cyan uppercase tracking-widest">ROADMAP DETAILED</span>
+                        <h2 class="font-syne text-3xl font-bold text-white mt-1">Trip Timeline</h2>
+                        <p class="text-xs text-gray-400 mt-1">Three days of pure travel and connection. Optimized for sunset views and campfire talks.</p>
+                    </div>
+
+                    <!-- Timeline Visualizer -->
+                    <div class="relative border-l-2 border-gray-800/80 ml-4 md:ml-32 space-y-12 py-4">
+                        
+                        <!-- DAY 1 -->
+                        <div class="relative">
+                            <!-- Absolute Left Date Label (MD screens only) -->
+                            <div class="hidden md:block absolute -left-[140px] top-0 text-right w-[110px]">
+                                <span class="font-syne text-lg font-bold text-white">DAY 01</span>
+                                <span class="text-[10px] font-mono text-neon-cyan block uppercase">June 1, 2026</span>
+                            </div>
+                            <!-- Bullet -->
+                            <div class="absolute -left-[9px] top-1.5 h-4 w-4 rounded-full bg-neon-cyan border-4 border-dark-900 shadow-md"></div>
+                            
+                            <!-- Day Box -->
+                            <div class="ml-6 glass-panel rounded-xl p-5 border border-gray-800">
+                                <span class="md:hidden inline-block bg-neon-cyan/10 text-neon-cyan text-[10px] font-mono tracking-wider px-2 py-0.5 rounded mb-2">DAY 01 • JUNE 1</span>
+                                <h3 class="font-syne text-lg font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-moon text-indigo-400"></i> Night Cruise & Arrival Vibes
+                                </h3>
+                                <div class="grid md:grid-cols-3 gap-4 mt-4 text-xs text-gray-400">
+                                    <div class="bg-dark-800/40 p-3 rounded-lg">
+                                        <p class="font-mono text-neon-cyan font-semibold">22:00 IST</p>
+                                        <p class="text-gray-200 mt-1 font-semibold">Embarkation from Mangalore</p>
+                                        <p class="mt-1">Assembling at central station, tech checks, luggage loading.</p>
+                                    </div>
+                                    <div class="bg-dark-800/40 p-3 rounded-lg">
+                                        <p class="font-mono text-neon-cyan font-semibold">23:30 IST</p>
+                                        <p class="text-gray-200 mt-1 font-semibold">Ghats Entry Vibe Session</p>
+                                        <p class="mt-1">Dim lights active, playlist queue launches, cold fog begins.</p>
+                                        </div>
+                                    <div class="bg-dark-800/40 p-3 rounded-lg">
+                                        <p class="font-mono text-neon-cyan font-semibold">05:30 IST</p>
+                                        <p class="text-gray-200 mt-1 font-semibold">Resort Sunrise Check-In</p>
+                                        <p class="mt-1">Early arrival in Chikmagalur hills, warm welcome tea, check-in rooms.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DAY 2 -->
+                        <div class="relative">
+                            <div class="hidden md:block absolute -left-[140px] top-0 text-right w-[110px]">
+                                <span class="font-syne text-lg font-bold text-white">DAY 02</span>
+                                <span class="text-[10px] font-mono text-neon-pink block uppercase">June 2, 2026</span>
+                            </div>
+                            <div class="absolute -left-[9px] top-1.5 h-4 w-4 rounded-full bg-neon-pink border-4 border-dark-900 shadow-md"></div>
+                            
+                            <div class="ml-6 glass-panel rounded-xl p-5 border border-gray-800">
+                                <span class="md:hidden inline-block bg-neon-pink/10 text-neon-pink text-[10px] font-mono tracking-wider px-2 py-0.5 rounded mb-2">DAY 02 • JUNE 2</span>
+                                <h3 class="font-syne text-lg font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-tree text-emerald-400"></i> Peak Trek & Campfire
+                                </h3>
+                                <div class="grid md:grid-cols-3 gap-4 mt-4 text-xs text-gray-400">
+                                    <div class="bg-dark-800/40 p-3 rounded-lg">
+                                        <p class="font-mono text-neon-pink font-semibold">09:00 IST</p>
+                                        <p class="text-gray-200 mt-1 font-semibold">Mist Run to Mullayanagiri Peak</p>
+                                        <p class="mt-1">Ascending the highest peak of Karnataka. Heavy fog & light winds.</p>
+                                    </div>
+                                    <div class="bg-dark-800/40 p-3 rounded-lg">
+                                        <p class="font-mono text-neon-pink font-semibold">14:30 IST</p>
+                                        <p class="text-gray-200 mt-1 font-semibold">Waterfalls & Trek</p>
+                                        <p class="mt-1">Heading down into deep forest water flows. Off-road exploration.</p>
+                                    </div>
+                                    <div class="bg-dark-800/40 p-3 rounded-lg">
+                                        <p class="font-mono text-neon-pink font-semibold">19:30 IST</p>
+                                        <p class="text-gray-200 mt-1 font-semibold">Campfire Session & BBQ</p>
+                                        <p class="mt-1">Unwind under the stars with live strings, hot food, and squad awards.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DAY 3 -->
+                        <div class="relative">
+                            <div class="hidden md:block absolute -left-[140px] top-0 text-right w-[110px]">
+                                <span class="font-syne text-lg font-bold text-white">DAY 03</span>
+                                <span class="text-[10px] font-mono text-purple-400 block uppercase">June 3, 2026</span>
+                            </div>
+                            <div class="absolute -left-[9px] top-1.5 h-4 w-4 rounded-full bg-purple-400 border-4 border-dark-900 shadow-md"></div>
+                            
+                            <div class="ml-6 glass-panel rounded-xl p-5 border border-gray-800">
+                                <span class="md:hidden inline-block bg-purple-400/10 text-purple-400 text-[10px] font-mono tracking-wider px-2 py-0.5 rounded mb-2">DAY 03 • JUNE 3</span>
+                                <h3 class="font-syne text-lg font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-mug-hot text-amber-400"></i> Estate Tour & Return Run
+                                </h3>
+                                <div class="grid md:grid-cols-3 gap-4 mt-4 text-xs text-gray-400">
+                                    <div class="bg-dark-800/40 p-3 rounded-lg">
+                                        <p class="font-mono text-purple-400 font-semibold">08:00 IST</p>
+                                        <p class="text-gray-200 mt-1 font-semibold">Coffee Estate Walk</p>
+                                        <p class="mt-1">Guided walk inside heritage coffee fields. Bean tasting session.</p>
+                                    </div>
+                                    <div class="bg-dark-800/40 p-3 rounded-lg">
+                                        <p class="font-mono text-purple-400 font-semibold">11:30 IST</p>
+                                        <p class="text-gray-200 mt-1 font-semibold">Sightseeing & Souvenirs</p>
+                                        <p class="mt-1">Exploring central Chikmagalur town for spices & local goods.</p>
+                                    </div>
+                                    <div class="bg-dark-800/40 p-3 rounded-lg">
+                                        <p class="font-mono text-purple-400 font-semibold">16:00 IST</p>
+                                        <p class="text-gray-200 mt-1 font-semibold">Departure to Mangalore</p>
+                                        <p class="mt-1">Winding down the Ghats to home. Expected touchdown by late evening.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 5: PERKS & PACKING -->
+            <section id="page-luxury" class="tab-content hidden">
+                <div class="grid md:grid-cols-12 gap-8 items-start">
+                    
+                    <!-- Trip Perks & Cost (Left Column) -->
+                    <div class="md:col-span-6 space-y-6">
+                        <div class="border-b border-gray-800/80 pb-3">
+                            <span class="text-xs font-mono text-neon-cyan uppercase tracking-widest">THE DEAL</span>
+                            <h2 class="font-syne text-3xl font-bold text-white mt-1">Cost & Inclusions</h2>
+                            <p class="text-xs text-gray-400 mt-1">Completely transparent finance setup handled by the Finance Team.</p>
+                        </div>
+
+                        <!-- Price Tag Card -->
+                        <div class="bg-gradient-to-br from-dark-800 to-dark-900 border border-neon-cyan/20 rounded-2xl p-6 text-center relative overflow-hidden">
+                            <div class="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-neon-cyan/5 blur-2xl"></div>
+                            <span class="text-xs font-mono text-neon-cyan uppercase tracking-wider bg-neon-cyan/5 px-3 py-1 rounded border border-neon-cyan/10">PER MEMBER POOL</span>
+                            <h2 class="font-syne text-4xl font-extrabold text-white mt-3">₹ 4,999/-</h2>
+                            <p class="text-[10px] text-gray-500 mt-1 font-mono">Advance Payment: ₹2,000 due by May 25, 2026</p>
+                            <!-- Inclusions Checklist Grid -->
+                            <div class="grid grid-cols-2 gap-2 mt-6 text-left text-xs text-gray-300">
+                                <div class="flex items-center gap-2 bg-dark-900/60 p-2.5 rounded-lg border border-gray-800">
+                                    <i class="fa-solid fa-circle-check text-neon-cyan"></i> Premium Cruiser
+                                </div>
+                                <div class="flex items-center gap-2 bg-dark-900/60 p-2.5 rounded-lg border border-gray-800">
+                                    <i class="fa-solid fa-circle-check text-neon-cyan"></i> Resort Stay (3D2N)
+                                </div>
+                                <div class="flex items-center gap-2 bg-dark-900/60 p-2.5 rounded-lg border border-gray-800">
+                                    <i class="fa-solid fa-circle-check text-neon-cyan"></i> All Meals & BBQ
+                                </div>
+                                <div class="flex items-center gap-2 bg-dark-900/60 p-2.5 rounded-lg border border-gray-800">
+                                    <i class="fa-solid fa-circle-check text-neon-cyan"></i> Music & Campfire
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Packing Checklist (Right Column) -->
+                    <div class="md:col-span-6 space-y-6">
+                        <div class="border-b border-gray-800/80 pb-3">
+                            <span class="text-xs font-mono text-neon-pink uppercase tracking-widest">GET SECURED</span>
+                            <h2 class="font-syne text-3xl font-bold text-white mt-1">Packing Checklist</h2>
+                            <p class="text-xs text-gray-400 mt-1">Check off items as you secure them inside your luggage pack.</p>
+                        </div>
+
+                        <!-- Interactive Checklists -->
+                        <div class="glass-panel rounded-xl p-5 border border-gray-800 space-y-3">
+                            <label class="flex items-center justify-between p-3 rounded-lg bg-dark-800/40 border border-gray-800/60 hover:border-neon-cyan/20 transition-all cursor-pointer group">
+                                <span class="flex items-center gap-3 text-xs text-gray-300 group-hover:text-white">
+                                    <input type="checkbox" class="w-4 h-4 accent-neon-cyan rounded focus:ring-0 cursor-pointer">
+                                    Heavy Warm Jackets (Fog & high altitude is cold!)
+                                </span>
+                                <i class="fa-solid fa-shirt text-neon-cyan/50 text-xs"></i>
+                            </label>
+                            <label class="flex items-center justify-between p-3 rounded-lg bg-dark-800/40 border border-gray-800/60 hover:border-neon-cyan/20 transition-all cursor-pointer group">
+                                <span class="flex items-center gap-3 text-xs text-gray-300 group-hover:text-white">
+                                    <input type="checkbox" class="w-4 h-4 accent-neon-cyan rounded focus:ring-0 cursor-pointer">
+                                    Power Bank (Road map navigation drains device)
+                                </span>
+                                <i class="fa-solid fa-battery-three-quarters text-neon-cyan/50 text-xs"></i>
+                            </label>
+                            <label class="flex items-center justify-between p-3 rounded-lg bg-dark-800/40 border border-gray-800/60 hover:border-neon-cyan/20 transition-all cursor-pointer group">
+                                <span class="flex items-center gap-3 text-xs text-gray-300 group-hover:text-white">
+                                    <input type="checkbox" class="w-4 h-4 accent-neon-cyan rounded focus:ring-0 cursor-pointer">
+                                    Trekking/Sports Shoes (Wet trails await)
+                                </span>
+                                <i class="fa-solid fa-shoe-prints text-neon-cyan/50 text-xs"></i>
+                            </label>
+                            <label class="flex items-center justify-between p-3 rounded-lg bg-dark-800/40 border border-gray-800/60 hover:border-neon-cyan/20 transition-all cursor-pointer group">
+                                <span class="flex items-center gap-3 text-xs text-gray-300 group-hover:text-white">
+                                    <input type="checkbox" class="w-4 h-4 accent-neon-cyan rounded focus:ring-0 cursor-pointer">
+                                    Personal Medication & Motion Sickness Pills
+                                </span>
+                                <i class="fa-solid fa-pills text-neon-cyan/50 text-xs"></i>
+                            </label>
+                            <label class="flex items-center justify-between p-3 rounded-lg bg-dark-800/40 border border-gray-800/60 hover:border-neon-cyan/20 transition-all cursor-pointer group">
+                                <span class="flex items-center gap-3 text-xs text-gray-300 group-hover:text-white">
+                                    <input type="checkbox" class="w-4 h-4 accent-neon-cyan rounded focus:ring-0 cursor-pointer">
+                                    Water Bottle & Insulated Flask
+                                </span>
+                                <i class="fa-solid fa-glass-water text-neon-cyan/50 text-xs"></i>
+                            </label>
+                            <label class="flex items-center justify-between p-3 rounded-lg bg-dark-800/40 border border-gray-800/60 hover:border-neon-cyan/20 transition-all cursor-pointer group">
+                                <span class="flex items-center gap-3 text-xs text-gray-300 group-hover:text-white">
+                                    <input type="checkbox" class="w-4 h-4 accent-neon-cyan rounded focus:ring-0 cursor-pointer">
+                                    Original Government ID Card (Mandatory resort policy)
+                                </span>
+                                <i class="fa-solid fa-id-card text-neon-cyan/50 text-xs"></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 6: MEMORY VAULT & EMERGENCY CONTACT -->
+            <section id="page-contact" class="tab-content hidden">
+                <div class="grid md:grid-cols-12 gap-8 items-start">
+                    
+                    <!-- Left: Memory & Shared Drive -->
+                    <div class="md:col-span-6 space-y-6">
+                        <div class="border-b border-gray-800/80 pb-3">
+                            <span class="text-xs font-mono text-neon-cyan uppercase tracking-widest">THE VAULT</span>
+                            <h2 class="font-syne text-3xl font-bold text-white mt-1">Moments to Memories</h2>
+                            <p class="text-xs text-gray-400 mt-1">Where all high-definition footage, drone reels, and memory snaps go.</p>
+                        </div>
+
+                        <div class="glass-panel rounded-xl p-6 border border-neon-cyan/20 text-center space-y-4">
+                            <div class="mx-auto h-36 w-36 bg-white p-2 rounded-lg flex items-center justify-center relative">
+                                <!-- Dummy QR Code Graphic representing Google Drive -->
+                                <div class="h-full w-full bg-cover bg-center" style="background-image: url('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://drive.google.com/drive/folders/the-code-squad-chikmagalur-2026');"></div>
+                                <div class="absolute inset-0 flex items-center justify-center bg-dark-900/90 text-[10px] text-neon-cyan font-mono opacity-0 hover:opacity-100 transition-opacity rounded-lg">
+                                    SCAN TO OPEN ALBUM
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-syne text-sm font-semibold text-white">Google Drive Cloud Storage</h4>
+                                <p class="text-xs text-gray-500 mt-1">Shared write access is authorized for all team delegates starting June 1st.</p>
+                            </div>
+                            <div class="pt-2">
+                                <a href="https://drive.google.com" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-neon-cyan hover:underline font-mono">
+                                    <i class="fa-solid fa-link"></i> access-terminal-link.cloud
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Emergency Logs -->
+                    <div class="md:col-span-6 space-y-6">
+                        <div class="border-b border-gray-800/80 pb-3">
+                            <span class="text-xs font-mono text-neon-pink uppercase tracking-widest">PROTOCOL SECURE</span>
+                            <h2 class="font-syne text-3xl font-bold text-white mt-1">Emergency Contacts</h2>
+                            <p class="text-xs text-gray-400 mt-1">Always keep these active coordinates registered inside your quick-dial log.</p>
+                        </div>
+
+                        <div class="glass-panel rounded-xl p-5 border border-gray-800 space-y-4">
+                            <div class="flex items-center justify-between pb-3 border-b border-gray-800/60 text-xs">
+                                <div>
+                                    <p class="font-semibold text-white">SQUAD CHIEF</p>
+                                    <p class="text-[10px] text-gray-500 font-mono">Lead Coordinator Operations</p>
+                                </div>
+                                <a href="tel:+919876543210" class="text-neon-cyan hover:text-white transition-all font-mono font-semibold">
+                                    +91 98765 43210
+                                </a>
+                            </div>
+                            <div class="flex items-center justify-between pb-3 border-b border-gray-800/60 text-xs">
+                                <div>
+                                    <p class="font-semibold text-white">VIBE CRUISER PILOT</p>
+                                    <p class="text-[10px] text-gray-500 font-mono">Logistics Driver Liaison</p>
+                                </div>
+                                <a href="tel:+919876543222" class="text-neon-cyan hover:text-white transition-all font-mono font-semibold">
+                                    +91 98765 43222
+                                </a>
+                            </div>
+                            <div class="flex items-center justify-between pb-3 border-b border-gray-800/60 text-xs">
+                                <div>
+                                    <p class="font-semibold text-white">CHIKMAGALUR MEDICAL GENERAL</p>
+                                    <p class="text-[10px] text-gray-500 font-mono">Nearest Clinic Support Desk</p>
+                                </div>
+                                <a href="tel:08262220444" class="text-neon-cyan hover:text-white transition-all font-mono font-semibold">
+                                    08262 - 220444
+                                </a>
+                            </div>
+                            <div class="bg-dark-800/40 p-3 rounded-lg border border-red-500/10 text-red-400 text-[10px] leading-normal font-mono">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> NOTICE: Inform Safety Team immediately if leaving the coordinate range of the resort or squad perimeter.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer / Interactive Quote Engine -->
+        <footer class="border-t border-gray-800/60 pt-6 pb-4 flex flex-col md:flex-row justify-between items-center gap-4 text-center">
+            <div>
+                <p id="quote-box" class="text-xs italic text-gray-400 font-mono">"Not all classrooms have four walls."</p>
+            </div>
+            <div class="flex gap-4 items-center">
+                <button onclick="rotateQuote()" class="text-[10px] font-mono tracking-wider text-neon-cyan border border-neon-cyan/20 px-3 py-1 rounded bg-neon-cyan/5 hover:bg-neon-cyan hover:text-dark-900 transition-all">
+                    <i class="fa-solid fa-shuffle mr-1"></i> ROTATE VIBE QUOTE
+                </button>
+                <p class="text-[10px] text-gray-500 font-mono">© 2026 The Code Squad Inc.</p>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Web Audio & Controller Script -->
+    <script>
+        // Tab switching machine
+        function switchTab(tabId) {
+            // Hide all tab-contents
+            document.querySelectorAll('.tab-content').forEach(element => {
+                element.classList.add('hidden');
+                element.classList.remove('block');
+            });
+            // Show target
+            const target = document.getElementById('page-' + tabId);
+            if (target) {
+                target.classList.remove('hidden');
+                target.classList.add('block');
+            }
+
+            // Update active tab buttons styling
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.className = "nav-tab text-gray-400 hover:text-white px-3 py-2.5 rounded-lg text-xs tracking-wider uppercase font-syne transition-all duration-300 text-center";
+            });
+            const activeBtn = document.getElementById('tab-' + tabId);
+            if (activeBtn) {
+                activeBtn.className = "nav-tab bg-neon-cyan text-dark-900 font-bold px-3 py-2.5 rounded-lg text-xs tracking-wider uppercase font-syne transition-all duration-300 text-center";
+            }
+        }
+
+        // Accordion functionality for squads
+        function toggleAccordion(id) {
+            const content = document.getElementById(id + '-content');
+            const icon = document.getElementById(id + '-icon');
+            
+            if (content.classList.contains('hidden')) {
+                // close other accordions
+                document.querySelectorAll("[id$='-content']").forEach(el => {
+                    if (el.id.startsWith('team-')) el.classList.add('hidden');
+                });
+                document.querySelectorAll("[id$='-icon']").forEach(el => {
+                    if (el.id.startsWith('team-')) {
+                        el.classList.remove('rotate-180');
+                        el.classList.add('fa-chevron-down');
+                    }
+                });
+
+                // open target
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+
+        // Ambient Synthesizer/Web-Audio Engine (To avoid external asset loading failure)
+        let audioCtx = null;
+        let oscillator = null;
+        let gainNode = null;
+        let biquadFilter = null;
+        let isPlaying = false;
+        function toggleVibeMode() {
+            const btn = document.getElementById('vibe-btn');
+            const ping = document.getElementById('vibe-ping');
+            const dot = document.getElementById('vibe-dot');
+            const icon = document.getElementById('vibe-icon');
+            const textSpan = btn.querySelector('span:nth-child(2)');
+
+            if (!isPlaying) {
+                // Web Audio initialization
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // Create warm ambient night ride synth pulse
+                oscillator = audioCtx.createOscillator();
+                gainNode = audioCtx.createGain();
+                biquadFilter = audioCtx.createBiquadFilter();
+
+                // Lofi drone sound
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(55, audioCtx.currentTime); // A1 note
+                
+                // Cut high harsh frequencies
+                biquadFilter.type = 'lowpass';
+                biquadFilter.frequency.setValueAtTime(140, audioCtx.currentTime);
+
+                // Gentle pulse animation via gain
+                gainNode.gain.setValueAtTime(0.02, audioCtx.currentTime);
+                
+                // Connect nodes
+                oscillator.connect(biquadFilter);
+                biquadFilter.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.start();
+                
+                // Pulse gain node to mock road bumps
+                let step = 0;
+                window.vibeInterval = setInterval(() => {
+                    if(gainNode && audioCtx) {
+                        const pulseGain = 0.015 + Math.sin(step) * 0.005;
+                        gainNode.gain.linearRampToValueAtTime(pulseGain, audioCtx.currentTime + 0.5);
+                        step += 0.3;
+                    }
+                }, 500);
+
+                // Update UI state
+                isPlaying = true;
+                btn.classList.add('border-neon-pink', 'text-neon-pink');
+                btn.classList.remove('border-neon-cyan/30', 'text-neon-cyan');
+                ping.classList.add('bg-neon-pink');
+                ping.classList.remove('bg-neon-cyan');
+                dot.classList.add('bg-neon-pink');
+                dot.classList.remove('bg-neon-cyan');
+                icon.className = 'fa-solid fa-volume-high text-sm animate-bounce';
+                textSpan.innerText = 'Bus Vibe: ACTIVE';
+            } else {
+                // Stop synth
+                if (oscillator) {
+                    oscillator.stop();
+                    oscillator.disconnect();
+                }
+                if (window.vibeInterval) {
+                    clearInterval(window.vibeInterval);
+                }
+                isPlaying = false;
+                
+                // Reset UI
+                btn.classList.remove('border-neon-pink', 'text-neon-pink');
+                btn.classList.add('border-neon-cyan/30', 'text-neon-cyan');
+                ping.classList.remove('bg-neon-pink');
+                ping.classList.add('bg-neon-cyan');
+                dot.classList.remove('bg-neon-pink');
+                dot.classList.add('bg-neon-cyan');
+                icon.className = 'fa-solid fa-volume-xmark text-sm';
+                textSpan.innerText = 'Bus Vibe: OFF';
+            }
+        }
+
+        // Cinematic Quote Engine list
+        const quotes = [
+            "“Some trips end. Memories don't.”",
+            "“Alexa, take me on a trip.”",
+            "“Not all classrooms have four walls.”",
+            "“Roads were made for stories.”",
+            "“The mountain mist hides what the heart uncovers.”",
+            "“Commit your worries, push to master, escape to nature.”"
+        ];
+        let currentQuoteIndex = 0;
+        function rotateQuote() {
+            currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
+            document.getElementById('quote-box').innerText = quotes[currentQuoteIndex];
+        }
+    </script>
+</body>
+</html>
